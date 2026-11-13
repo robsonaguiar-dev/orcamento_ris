@@ -1,0 +1,226 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Estações RIS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: faixa de requisitos fixos, pré-configurações em grade, montador em duas colunas com resumo fixo. */
+:root{
+  --bg:#f3f6f8; --surface:#ffffff; --fg:#13202b; --muted:#5a6b78; --line:#d6dee4;
+  --accent:#0b7a6e; --accent-fg:#ffffff; --accent-soft:#dcf1ed; --ink:#0f2230; --ink-fg:#e6f0f5;
+  --warn:#9a5b00; --warn-soft:#fff1d6;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c151c; --surface:#142029; --fg:#e4edf2; --muted:#93a5b2; --line:#26373f;
+  --accent:#3fc9b4; --accent-fg:#06211d; --accent-soft:#12383a; --ink:#091219; --ink-fg:#e6f0f5;
+  --warn:#f2b44d; --warn-soft:#3a2d12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c151c; --surface:#142029; --fg:#e4edf2; --muted:#93a5b2; --line:#26373f;
+  --accent:#3fc9b4; --accent-fg:#06211d; --accent-soft:#12383a; --ink:#091219; --ink-fg:#e6f0f5;
+  --warn:#f2b44d; --warn-soft:#3a2d12; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{margin:0;text-wrap:balance;font-weight:600;letter-spacing:-.01em}
+.label{font:500 11px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+header{padding:40px 0 20px;display:grid;gap:12px}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.1}
+header p{margin:0;max-width:62ch;color:var(--muted);font-size:16px}
+.req{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0;padding:0;list-style:none}
+.req li{font:500 12.5px var(--font-mono);background:var(--ink);color:var(--ink-fg);padding:7px 11px;border-radius:4px}
+section{margin-top:44px}
+.sec-h{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;margin-bottom:16px}
+.sec-h h2{font-size:22px}
+.sec-h p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{font:500 13px var(--font-body);padding:8px 14px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+button:focus-visible,.opt:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.preset{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:grid;gap:12px;align-content:start;min-width:0}
+.preset:hover{border-color:var(--accent)}
+.preset:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.preset[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.preset .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.preset h3{font-size:19px}
+.plat{font:500 11px var(--font-mono);letter-spacing:.08em;padding:3px 7px;border-radius:3px;background:var(--accent-soft);color:var(--accent)}
+.preset .use{color:var(--muted);font-size:14px}
+.preset dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:13.5px}
+.preset dt{color:var(--muted)}
+.preset dd{margin:0;font-family:var(--font-mono);font-size:12.5px;min-width:0;overflow-wrap:anywhere}
+.preset .price{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:12px}
+.preset .price b{font:600 22px var(--font-mono);font-variant-numeric:tabular-nums}
+.builder{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+@media (max-width:860px){.builder{grid-template-columns:1fr}}
+.groups{display:grid;gap:26px;min-width:0}
+.group h3{font-size:16px;margin-bottom:4px}
+.group .hint{margin:0 0 10px;color:var(--muted);font-size:13.5px}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:10px}
+.opt{display:grid;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;cursor:pointer;position:relative;min-width:0}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt:hover{border-color:var(--accent)}
+.opt.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);background:var(--accent-soft)}
+.opt b{font-weight:600;font-size:14.5px}
+.opt span{font:400 12.5px/1.45 var(--font-mono);color:var(--muted);overflow-wrap:anywhere}
+.opt.on span{color:var(--fg)}
+.tag{justify-self:start;font:500 10.5px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:10px 12px;font-size:13px}
+.auto{background:var(--surface);border:1px dashed var(--line);border-radius:6px;padding:12px 14px;font-size:13.5px;color:var(--muted);display:grid;gap:4px}
+.auto b{color:var(--fg);font-weight:500}
+aside{position:sticky;top:16px;background:var(--ink);color:var(--ink-fg);border-radius:10px;padding:20px;display:grid;gap:14px;min-width:0}
+@media (max-width:860px){aside{position:static}}
+aside .label{color:#8fb0c2}
+aside h3{font-size:18px}
+aside ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+aside li{display:grid;gap:1px;font-size:13.5px;min-width:0}
+aside li small{font:400 11.5px var(--font-mono);color:#8fb0c2;overflow-wrap:anywhere}
+.total{border-top:1px solid #2a4252;padding-top:14px;display:grid;gap:4px}
+.total b{font:600 30px var(--font-mono);font-variant-numeric:tabular-nums;color:#6fe0cd}
+.total small{color:#8fb0c2;font-size:12px}
+.copy{font:600 14px var(--font-body);background:#6fe0cd;color:#06211d;border:0;border-radius:6px;padding:12px;cursor:pointer}
+.copy:hover{filter:brightness(1.08)}
+.fine{margin-top:36px;color:var(--muted);font-size:12.5px;max-width:80ch}
+@media (prefers-reduced-motion:no-preference){.opt,.preset{transition:border-color .15s,box-shadow .15s}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="label">Estações de trabalho para RIS</span>
+  <h1>Monte a estação de laudos ideal</h1>
+  <p>Escolha uma das configurações prontas ou combine os componentes do seu jeito. Toda configuração já atende ao mínimo para laudos em RIS/PACS.</p>
+  <ul class="req" aria-label="Itens incluídos em toda configuração">
+    <li>Mini tower</li><li>32 GB DDR5</li><li>NVMe 1 TB ou mais</li><li>NVIDIA A2000 ou T1000</li><li>Windows 11 Pro</li>
+  </ul>
+</header>
+
+<section aria-labelledby="h-prontas">
+  <div class="sec-h">
+    <div><h2 id="h-prontas">Configurações prontas</h2><p>Clique em uma para carregá-la no montador abaixo e ajustar o que quiser.</p></div>
+    <div class="seg" role="group" aria-label="Filtrar por plataforma">
+      <button type="button" data-f="all" aria-pressed="true">Todas</button>
+      <button type="button" data-f="Intel" aria-pressed="false">Intel</button>
+      <button type="button" data-f="AMD" aria-pressed="false">AMD</button>
+    </div>
+  </div>
+  <div class="presets" id="presets"></div>
+</section>
+
+<section aria-labelledby="h-monte">
+  <div class="sec-h"><div><h2 id="h-monte">Monte a sua</h2><p>Combine processador, armazenamento, placa de vídeo e demais itens. Placa-mãe e memória são escolhidas automaticamente para combinar com o processador.</p></div></div>
+  <div class="builder">
+    <div class="groups" id="groups"></div>
+    <aside aria-live="polite">
+      <div><span class="label">Sua configuração</span><h3 id="s-name">Personalizada</h3></div>
+      <ul id="s-list"></ul>
+      <div class="total"><span class="label">Valor médio estimado</span><b id="s-total"></b><small>Estimativa de referência, sujeita a variação de mercado. O valor final é confirmado na proposta.</small></div>
+      <button type="button" class="copy" id="copy">Copiar configuração</button>
+      <small id="copied" style="color:#8fb0c2" hidden>Configuração copiada. Envie para receber a proposta.</small>
+    </aside>
+  </div>
+</section>
+<p class="fine">Todos os computadores acompanham gabinete mini tower com ventilação, fonte de alimentação e licença Windows 11 Pro. As placas NVIDIA A2000 e T1000 possuem saídas Mini DisplayPort para monitores de diagnóstico.</p>
+</div>
+
+<script>
+/* Dados: preços internos usados apenas para a estimativa; nunca exibidos por item. */
+const D={
+cpu:[
+ {id:"u5",n:"Intel Core Ultra 5 245K",p:"Intel",s:"14 núcleos (6P+8E) · até 5,2 GHz · 24 MB",v:1430,board:{n:"Gigabyte B860M H",s:"B860 · LGA1851 · Micro-ATX",v:913}},
+ {id:"u7",n:"Intel Core Ultra 7 265",p:"Intel",s:"20 núcleos · até 5,3 GHz · 30 MB · 65 W",v:2750,board:{n:"Gigabyte B860M Eagle Plus WiFi6",s:"B860 · LGA1851 · Micro-ATX · Wi-Fi 6E",v:1419}},
+ {id:"u7k",n:"Intel Core Ultra 7 265K",p:"Intel",s:"20 núcleos (8P+12E) · até 5,5 GHz · 30 MB",v:3111,board:{n:"Gigabyte B860M Aorus Elite",s:"B860 · LGA1851 · Micro-ATX",v:1650}},
+ {id:"r5",n:"AMD Ryzen 5 7600",p:"AMD",s:"6 núcleos / 12 threads · até 5,1 GHz · 32 MB",v:1133,board:{n:"ASUS B650M-AYW WIFI",s:"B650 · AM5 · Micro-ATX · Wi-Fi 6",v:935}},
+ {id:"r7",n:"AMD Ryzen 7 7700",p:"AMD",s:"8 núcleos / 16 threads · até 5,3 GHz · 40 MB",v:2090,board:{n:"Gigabyte B650M Aorus Elite",s:"B650 · AM5 · Micro-ATX",v:1452}},
+ {id:"r7x",n:"AMD Ryzen 7 9700X",p:"AMD",s:"8 núcleos / 16 threads (Zen 5) · até 5,5 GHz · 40 MB",v:3179,board:{n:"Gigabyte B650M Aorus Elite",s:"B650 · AM5 · Micro-ATX",v:1452}}],
+ram:{Intel:{n:"32 GB DDR5-5600 (2×16 GB)",s:"CL40 · dual channel · dissipador",v:2574},AMD:{n:"32 GB DDR5-5600 (2×16 GB)",s:"CL36 · perfil EXPO · dual channel",v:3080}},
+ssd:[
+ {id:"s1",n:"NVMe 1 TB PCIe 4.0",s:"M.2 2280 · leitura até 7.200 MB/s",v:825,t:"Essencial"},
+ {id:"s2",n:"NVMe 1 TB PCIe 4.0 alto desempenho",s:"M.2 2280 · leitura até 7.000 MB/s · gravação até 6.000 MB/s",v:1760,t:"Intermediário"},
+ {id:"s3",n:"NVMe 1 TB PCIe 4.0 premium",s:"M.2 2280 · leitura até 7.250 MB/s · gravação até 6.900 MB/s",v:2420,t:"Topo"}],
+gpu:[
+ {id:"g1",n:"NVIDIA RTX A2000 12 GB",s:"Ampere · 3.328 CUDA · 12 GB GDDR6 ECC · 192 bits · 70 W · 4× mini-DP",v:6160,t:"Mais potente"},
+ {id:"g2",n:"NVIDIA T1000 8 GB",s:"Turing · 896 CUDA · 8 GB GDDR6 · 128 bits · 50 W · 4× mini-DP",v:4400,t:"Custo menor"}],
+cooler:[
+ {id:"c0",n:"Cooler original AMD Wraith Stealth",s:"Incluso no Ryzen 5 7600 · 65 W",v:0,only:["r5"]},
+ {id:"c1",n:"DeepCool Gammaxx AG400",s:"Air cooler torre · ventoinha 120 mm",v:139,t:"Básico"},
+ {id:"c2",n:"DeepCool AK400 Digital SE",s:"Air cooler torre · ventoinha 120 mm ARGB",v:275,t:"Silencioso"},
+ {id:"c3",n:"Water cooler Montech HyperFlow 240 mm",s:"AIO 240 mm · 2 ventoinhas ARGB",v:550,t:"Máxima refrigeração"}],
+case:[
+ {id:"k1",n:"Montech AIR 100 ARGB",s:"Mini tower mATX · 405×210×425 mm · 4 ventoinhas",v:346},
+ {id:"k2",n:"Montech Heritage PRO",s:"Mini tower mATX · 4 ventoinhas · suporta radiador até 360 mm",v:605}],
+psu:[
+ {id:"p1",n:"Fonte 650 W 80 Plus Bronze",s:"ATX · PFC ativo",v:264},
+ {id:"p2",n:"Fonte 650 W 80 Plus Gold",s:"ATX 3.1 · PFC ativo",v:407},
+ {id:"p3",n:"Fonte 850 W 80 Plus Gold",s:"ATX · full modular",v:781}],
+win:{n:"Windows 11 Pro 64 bits",s:"Licença OEM",v:1089}};
+const PRE=[
+ {id:"ei",tier:"Entrada",use:"Rotina de laudos com ótimo custo-benefício.",sel:{cpu:"u5",ssd:"s1",gpu:"g1",cooler:"c1",case:"k1",psu:"p1"}},
+ {id:"ea",tier:"Entrada",use:"Rotina de laudos com ótimo custo-benefício.",sel:{cpu:"r5",ssd:"s1",gpu:"g1",cooler:"c0",case:"k1",psu:"p1"}},
+ {id:"mi",tier:"Médio",use:"Mais núcleos e folga para vários estudos abertos.",sel:{cpu:"u7",ssd:"s2",gpu:"g1",cooler:"c2",case:"k2",psu:"p2"}},
+ {id:"ma",tier:"Médio",use:"Mais núcleos e folga para vários estudos abertos.",sel:{cpu:"r7",ssd:"s2",gpu:"g1",cooler:"c2",case:"k2",psu:"p2"}},
+ {id:"pi",tier:"Profissional",use:"Desempenho máximo e refrigeração líquida para uso contínuo.",sel:{cpu:"u7k",ssd:"s3",gpu:"g1",cooler:"c3",case:"k2",psu:"p3"}},
+ {id:"pa",tier:"Profissional",use:"Desempenho máximo e refrigeração líquida para uso contínuo.",sel:{cpu:"r7x",ssd:"s3",gpu:"g1",cooler:"c3",case:"k2",psu:"p3"}}];
+const GROUPS=[
+ {k:"cpu",t:"Processador",h:"Intel Core Ultra 5 ou superior (última geração) e AMD Ryzen."},
+ {k:"gpu",t:"Placa de vídeo",h:"Obrigatória para laudos: A2000 ou T1000."},
+ {k:"ssd",t:"Armazenamento",h:"SSD NVMe de 1 TB, mínimo de todas as configurações."},
+ {k:"cooler",t:"Refrigeração do processador"},
+ {k:"case",t:"Gabinete mini tower"},
+ {k:"psu",t:"Fonte de alimentação"}];
+const by=(k,id)=>D[k].find(x=>x.id===id);
+const fmt=n=>"R$ "+n.toLocaleString("pt-BR");
+let S={...PRE[0].sel}, filter="all", name=PRE[0].tier+" · Intel";
+const cpuOf=s=>by("cpu",s.cpu);
+function total(s){const c=cpuOf(s);return c.v+c.board.v+D.ram[c.p].v+by("ssd",s.ssd).v+by("gpu",s.gpu).v+by("cooler",s.cooler).v+by("case",s.case).v+by("psu",s.psu).v+D.win.v}
+const avg=s=>Math.round(total(s)/100)*100;
+function fixCooler(){const ok=by("cooler",S.cooler);if(ok.only&&!ok.only.includes(S.cpu)||false)S.cooler="c1";}
+function renderPresets(){
+ const el=document.getElementById("presets");el.innerHTML="";
+ PRE.filter(p=>filter==="all"||cpuOf(p.sel).p===filter).forEach(p=>{
+  const c=cpuOf(p.sel),b=document.createElement("button");b.type="button";b.className="preset";
+  const on=JSON.stringify(S)===JSON.stringify(p.sel);b.setAttribute("aria-pressed",on);
+  b.innerHTML=`<div class="top"><h3>${p.tier}</h3><span class="plat">${c.p.toUpperCase()}</span></div><div class="use">${p.use}</div>
+  <dl><dt>CPU</dt><dd>${c.n}</dd><dt>GPU</dt><dd>${by("gpu",p.sel.gpu).n}</dd><dt>Memória</dt><dd>32 GB DDR5</dd><dt>SSD</dt><dd>1 TB NVMe</dd><dt>Refrig.</dt><dd>${by("cooler",p.sel.cooler).n}</dd></dl>
+  <div class="price"><span class="label">Valor médio</span><b>${fmt(avg(p.sel))}</b></div>`;
+  b.onclick=()=>{S={...p.sel};name=p.tier+" · "+c.p;render();document.getElementById("h-monte").scrollIntoView({behavior:"smooth"})};
+  el.appendChild(b)});
+}
+function renderGroups(){
+ const el=document.getElementById("groups");el.innerHTML="";
+ GROUPS.forEach(g=>{
+  const box=document.createElement("div");box.className="group";
+  box.innerHTML=`<h3>${g.t}</h3>${g.h?`<p class="hint">${g.h}</p>`:""}`;
+  const w=document.createElement("div");w.className="opts";w.setAttribute("role","radiogroup");w.setAttribute("aria-label",g.t);
+  D[g.k].filter(o=>!o.only||o.only.includes(S.cpu)).forEach(o=>{
+   const l=document.createElement("label");l.className="opt"+(S[g.k]===o.id?" on":"");
+   l.innerHTML=`${o.t?`<span class="tag">${o.t}</span>`:""}<b>${o.p?o.p+" · ":""}${o.n}</b><span>${o.s}</span><input type="radio" name="${g.k}" value="${o.id}"${S[g.k]===o.id?" checked":""}>`;
+   l.querySelector("input").onchange=()=>{S[g.k]=o.id;name="Personalizada";if(g.k==="cpu")fixCooler();render()};
+   w.appendChild(l)});
+  box.appendChild(w);
+  if(g.k==="cpu"){const c=cpuOf(S),a=document.createElement("div");a.className="auto";a.style.marginTop="10px";
+   a.innerHTML=`<span class="label">Escolhidos automaticamente</span><span><b>Placa-mãe:</b> ${c.board.n} (${c.board.s})</span><span><b>Memória:</b> ${D.ram[c.p].n} · ${D.ram[c.p].s}</span>`;box.appendChild(a)}
+  if(g.k==="cooler"&&S.cooler==="c3"&&S.case==="k1"){const n=document.createElement("div");n.className="note";n.style.marginTop="10px";n.textContent="Water cooler 240 mm combina melhor com o gabinete Heritage PRO. Confirmaremos a compatibilidade na proposta.";box.appendChild(n)}
+  el.appendChild(box)});
+}
+function lines(){const c=cpuOf(S);return[
+ ["Processador",c.n,c.s],["Placa-mãe",c.board.n,c.board.s],["Memória",D.ram[c.p].n,D.ram[c.p].s],
+ ["Armazenamento",by("ssd",S.ssd).n,by("ssd",S.ssd).s],["Placa de vídeo",by("gpu",S.gpu).n,by("gpu",S.gpu).s],
+ ["Refrigeração",by("cooler",S.cooler).n,by("cooler",S.cooler).s],["Gabinete",by("case",S.case).n,by("case",S.case).s],
+ ["Fonte",by("psu",S.psu).n,by("psu",S.psu).s],["Sistema",D.win.n,D.win.s]]}
+function renderSummary(){
+ document.getElementById("s-name").textContent=name;
+ document.getElementById("s-list").innerHTML=lines().map(l=>`<li><span>${l[1]}</span><small>${l[0]} · ${l[2]}</small></li>`).join("");
+ document.getElementById("s-total").textContent="≈ "+fmt(avg(S));
+}
+function render(){renderPresets();renderGroups();renderSummary();document.getElementById("copied").hidden=true}
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderPresets()});
+document.getElementById("copy").onclick=()=>{
+ const t="Estação RIS — "+name+"\n"+lines().map(l=>l[0]+": "+l[1]+" ("+l[2]+")").join("\n")+"\nValor médio estimado: "+fmt(avg(S));
+ const done=()=>{document.getElementById("copied").hidden=false};
+ (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(done).catch(()=>{
+  const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(e){}a.remove();done()})};
+render();
+</script>
+
+</body></html>
