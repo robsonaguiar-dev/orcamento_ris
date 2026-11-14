@@ -241,10 +241,14 @@ frm.addEventListener("submit",async e=>{
  const pecas=lines().map(l=>l[0]+": "+l[1]).join("\n");
  btn.disabled=true;btn.textContent="Enviando...";
  try{
-  const r=await fetch("https://api.web3forms.com/submit",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({
-   access_key:CONFIG.chave,subject:"Nova cotação RIS — "+cli,from_name:"Site Estações RIS",
+  const fd=new FormData();
+  const campos={access_key:CONFIG.chave,subject:"Nova cotação RIS — "+cli,from_name:"Site Estações RIS",
    Cliente:cli,Telefone:tel,Configuracao:name,Pecas:pecas,Valor_medio_estimado:fmt(avg(S)),
-   Abrir_cotacao_com_links:CONFIG.painel+"#c="+enc})});
+   Abrir_cotacao_com_links:CONFIG.painel+"#c="+enc};
+  Object.keys(campos).forEach(k=>fd.append(k,campos[k]));
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),15000);
+  const r=await fetch("https://api.web3forms.com/submit",{method:"POST",body:fd,signal:ctl.signal});
+  clearTimeout(tm);
   const j=await r.json();
   if(!j.success)throw new Error(j.message||"falha");
   say("Orçamento enviado, "+cli.split(" ")[0]+"! Entraremos em contato em breve.");
@@ -253,7 +257,7 @@ frm.addEventListener("submit",async e=>{
   waEl.href="https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(t);waEl.hidden=false;
  }catch(err){
   btn.disabled=false;btn.textContent="Enviar orçamento";
-  say("Não foi possível enviar agora. Tente de novo ou fale pelo WhatsApp.",true);
+  say("Não foi possível enviar agora ("+(err&&err.name==="AbortError"?"tempo esgotado":(err&&err.message)||"erro")+"). Use o botão do WhatsApp abaixo.",true);
   waEl.href="https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent("Olá! Quero um orçamento da estação RIS ("+name+"):\n"+pecas);waEl.hidden=false;
  }});
 render();
