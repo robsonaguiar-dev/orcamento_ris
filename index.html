@@ -83,7 +83,8 @@ aside li small{font:400 11.5px var(--font-mono);color:#8fb0c2;overflow-wrap:anyw
 .send{display:grid;gap:8px}
 .send input{font:400 15px var(--font-body);padding:11px 12px;border-radius:6px;border:1px solid #2a4252;background:#0a1923;color:var(--ink-fg)}
 .send input:focus-visible{outline:2px solid #6fe0cd;outline-offset:1px}
-.copy{display:block;text-align:center;text-decoration:none}
+.copy{display:block;text-align:center;text-decoration:none;width:100%}
+.copy[disabled]{opacity:.6;cursor:wait}
 .fine{margin-top:36px;color:var(--muted);font-size:12.5px;max-width:80ch}
 @media (prefers-reduced-motion:no-preference){.opt,.preset{transition:border-color .15s,box-shadow .15s}}
 </style>
@@ -120,9 +121,13 @@ aside li small{font:400 11.5px var(--font-mono);color:#8fb0c2;overflow-wrap:anyw
       <div class="total"><span class="label">Valor médio estimado</span><b id="s-total"></b><small>Estimativa de referência, sujeita a variação de mercado. O valor final é confirmado na proposta.</small></div>
       <form id="frm" class="send" autocomplete="off">
         <label class="label" for="cli">Seu nome</label>
-        <input id="cli" type="text" placeholder="Nome ou clínica" maxlength="80">
-        <a class="copy" id="wa" href="#" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
-        <small id="msg" style="color:#8fb0c2">Você será direcionado ao WhatsApp com a configuração pronta para enviar.</small>
+        <input id="cli" type="text" placeholder="Nome ou clínica" maxlength="80" required>
+        <label class="label" for="tel">WhatsApp ou telefone</label>
+        <input id="tel" type="tel" placeholder="(11) 99999-9999" maxlength="25" required>
+        <input type="text" id="bot" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0">
+        <button type="submit" class="copy" id="enviar">Enviar orçamento</button>
+        <small id="msg" style="color:#8fb0c2">Enviamos a configuração escolhida e retornamos com a proposta.</small>
+        <a id="wa" href="#" target="_blank" rel="noopener" hidden style="color:#6fe0cd;font-size:13px">Falar agora pelo WhatsApp</a>
       </form>
     </aside>
   </div>
@@ -133,7 +138,7 @@ aside li small{font:400 11.5px var(--font-mono);color:#8fb0c2;overflow-wrap:anyw
 <script>
 /* Dados: preços internos usados apenas para a estimativa; nunca exibidos por item. */
 /* CONFIGURAÇÃO: troque pelos seus dados. whatsapp = DDI+DDD+número, só dígitos (ex.: 5511999999999). */
-const CONFIG={whatsapp:"5511999085935",painel:"https://robsonaguiar-dev.github.io/orcamento_links/"};
+const CONFIG={whatsapp:"5511999085935",chave:"COLE_AQUI_A_CHAVE_WEB3FORMS",painel:"https://robsonaguiar-dev.github.io/orcamento_links/"};
 const D={
 cpu:[
  {id:"u5",n:"Intel Core Ultra 5 245K",p:"Intel",s:"14 núcleos (6P+8E) · até 5,2 GHz · 24 MB",v:1430,board:{n:"Gigabyte B860M H",s:"B860 · LGA1851 · Micro-ATX",v:913}},
@@ -224,16 +229,32 @@ function renderSummary(){
 }
 function render(){renderPresets();renderGroups();renderSummary();refreshWa()}
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderPresets()});
-const waEl=document.getElementById("wa"),cliEl=document.getElementById("cli"),msgEl=document.getElementById("msg");
-function buildMsg(){
- const cli=cliEl.value.trim();
+const frm=document.getElementById("frm"),cliEl=document.getElementById("cli"),telEl=document.getElementById("tel"),msgEl=document.getElementById("msg"),btn=document.getElementById("enviar"),waEl=document.getElementById("wa");
+function say(t,warn){msgEl.textContent=t;msgEl.style.color=warn?"#f2b44d":"#8fb0c2"}
+function refreshWa(){}
+frm.addEventListener("submit",async e=>{
+ e.preventDefault();
+ if(document.getElementById("bot").value)return;
+ const cli=cliEl.value.trim(),tel=telEl.value.trim();
+ if(!cli||!tel){say("Preencha seu nome e telefone.",true);return}
  const enc=btoa(unescape(encodeURIComponent(JSON.stringify({n:cli,t:name,s:S}))));
- const txt="*Nova cotação · Estação RIS*\nCliente: "+cli+"\nConfiguração: "+name+"\n\n"+lines().map(l=>l[0]+": "+l[1]).join("\n")+"\n\nValor médio estimado: "+fmt(avg(S))+"\n\nLinks para o orçamento: "+CONFIG.painel+"#c="+enc;
- return "https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(txt)}
-function refreshWa(){waEl.href=buildMsg()}
-waEl.addEventListener("click",e=>{
- if(!cliEl.value.trim()){e.preventDefault();msgEl.textContent="Digite seu nome para enviar.";msgEl.style.color="#f2b44d";cliEl.focus();return}
- refreshWa();msgEl.style.color="#8fb0c2";msgEl.textContent="Abrindo o WhatsApp com a configuração pronta."});
-cliEl.addEventListener("input",refreshWa);
+ const pecas=lines().map(l=>l[0]+": "+l[1]).join("\n");
+ btn.disabled=true;btn.textContent="Enviando...";
+ try{
+  const r=await fetch("https://api.web3forms.com/submit",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({
+   access_key:CONFIG.chave,subject:"Nova cotação RIS — "+cli,from_name:"Site Estações RIS",
+   Cliente:cli,Telefone:tel,Configuracao:name,Pecas:pecas,Valor_medio_estimado:fmt(avg(S)),
+   Abrir_cotacao_com_links:CONFIG.painel+"#c="+enc})});
+  const j=await r.json();
+  if(!j.success)throw new Error(j.message||"falha");
+  say("Orçamento enviado, "+cli.split(" ")[0]+"! Entraremos em contato em breve.");
+  btn.textContent="Enviado";
+  const t="Olá! Acabei de enviar o orçamento da estação RIS ("+name+") pelo site. Meu nome é "+cli+".";
+  waEl.href="https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(t);waEl.hidden=false;
+ }catch(err){
+  btn.disabled=false;btn.textContent="Enviar orçamento";
+  say("Não foi possível enviar agora. Tente de novo ou fale pelo WhatsApp.",true);
+  waEl.href="https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent("Olá! Quero um orçamento da estação RIS ("+name+"):\n"+pecas);waEl.hidden=false;
+ }});
 render();
 </script>
