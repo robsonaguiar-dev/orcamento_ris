@@ -19,6 +19,7 @@
   --accent:#3fc9b4; --accent-fg:#06211d; --accent-soft:#12383a; --ink:#091219; --ink-fg:#e6f0f5;
   --warn:#f2b44d; --warn-soft:#3a2d12; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--font-body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 .wrap{max-width:1120px;margin:0 auto}
@@ -84,7 +85,13 @@ aside li small{font:400 11.5px var(--font-mono);color:#8fb0c2;overflow-wrap:anyw
 .send input{font:400 15px var(--font-body);padding:11px 12px;border-radius:6px;border:1px solid #2a4252;background:#0a1923;color:var(--ink-fg)}
 .send input:focus-visible{outline:2px solid #6fe0cd;outline-offset:1px}
 .copy{display:block;text-align:center;text-decoration:none;width:100%}
-.copy[disabled]{opacity:.6;cursor:wait}
+.copy[disabled]{opacity:.7;cursor:wait}
+.spin{display:inline-block;width:13px;height:13px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ok{display:grid;gap:10px;background:#0d3a35;border:1px solid #6fe0cd;border-radius:8px;padding:16px;text-align:center}
+.ok .tick{justify-self:center;width:40px;height:40px;border-radius:50%;background:#6fe0cd;color:#06211d;display:grid;place-items:center;font:700 22px var(--font-body)}
+.ok b{font-size:16px;color:#e6f0f5}.ok p{margin:0;color:#b9d6e0;font-size:13.5px}
+.ok a,.ok button{font:600 13px var(--font-body);color:#6fe0cd;background:none;border:0;cursor:pointer;text-decoration:underline;padding:4px}
 .fine{margin-top:36px;color:var(--muted);font-size:12.5px;max-width:80ch}
 @media (prefers-reduced-motion:no-preference){.opt,.preset{transition:border-color .15s,box-shadow .15s}}
 </style>
@@ -129,6 +136,13 @@ aside li small{font:400 11.5px var(--font-mono);color:#8fb0c2;overflow-wrap:anyw
         <small id="msg" style="color:#8fb0c2">Enviamos a configuração escolhida e retornamos com a proposta.</small>
         <a id="wa" href="#" target="_blank" rel="noopener" hidden style="color:#6fe0cd;font-size:13px">Falar agora pelo WhatsApp</a>
       </form>
+      <div class="ok" id="ok" hidden role="status">
+        <span class="tick" aria-hidden="true">✓</span>
+        <b>Orçamento enviado!</b>
+        <p id="okmsg">Recebemos a sua configuração e entraremos em contato em breve.</p>
+        <a id="wa2" href="#" target="_blank" rel="noopener">Falar agora pelo WhatsApp</a>
+        <button type="button" id="again">Enviar outra configuração</button>
+      </div>
     </aside>
   </div>
 </section>
@@ -229,6 +243,7 @@ function renderSummary(){
 }
 function render(){renderPresets();renderGroups();renderSummary();refreshWa()}
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderPresets()});
+const okEl=document.getElementById("ok"),wa2=document.getElementById("wa2"),okmsg=document.getElementById("okmsg");
 const frm=document.getElementById("frm"),cliEl=document.getElementById("cli"),telEl=document.getElementById("tel"),msgEl=document.getElementById("msg"),btn=document.getElementById("enviar"),waEl=document.getElementById("wa");
 function say(t,warn){msgEl.textContent=t;msgEl.style.color=warn?"#f2b44d":"#8fb0c2"}
 function refreshWa(){}
@@ -239,26 +254,28 @@ frm.addEventListener("submit",async e=>{
  if(!cli||!tel){say("Preencha seu nome e telefone.",true);return}
  const enc=btoa(unescape(encodeURIComponent(JSON.stringify({n:cli,t:name,s:S}))));
  const pecas=lines().map(l=>l[0]+": "+l[1]).join("\n");
- btn.disabled=true;btn.textContent="Enviando...";
+ btn.disabled=true;btn.innerHTML='<span class="spin"></span>Enviando...';say("Enviando, aguarde um instante...");
  try{
   const fd=new FormData();
   const campos={access_key:CONFIG.chave,subject:"Nova cotação RIS — "+cli,from_name:"Site Estações RIS",
    Cliente:cli,Telefone:tel,Configuracao:name,Pecas:pecas,Valor_medio_estimado:fmt(avg(S)),
    Abrir_cotacao_com_links:CONFIG.painel+"#c="+enc};
   Object.keys(campos).forEach(k=>fd.append(k,campos[k]));
-  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),15000);
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),10000);
   const r=await fetch("https://api.web3forms.com/submit",{method:"POST",body:fd,signal:ctl.signal});
   clearTimeout(tm);
   const j=await r.json();
   if(!j.success)throw new Error(j.message||"falha");
-  say("Orçamento enviado, "+cli.split(" ")[0]+"! Entraremos em contato em breve.");
-  btn.textContent="Enviado";
   const t="Olá! Acabei de enviar o orçamento da estação RIS ("+name+") pelo site. Meu nome é "+cli+".";
-  waEl.href="https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(t);waEl.hidden=false;
+  wa2.href="https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(t);
+  okmsg.textContent="Obrigado, "+cli.split(" ")[0]+". Recebemos a sua configuração ("+name+") e entraremos em contato em breve.";
+  frm.hidden=true;okEl.hidden=false;okEl.scrollIntoView({behavior:"smooth",block:"nearest"});
+  btn.disabled=false;btn.textContent="Enviar orçamento";
  }catch(err){
   btn.disabled=false;btn.textContent="Enviar orçamento";
   say("Não foi possível enviar agora ("+(err&&err.name==="AbortError"?"tempo esgotado":(err&&err.message)||"erro")+"). Use o botão do WhatsApp abaixo.",true);
   waEl.href="https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent("Olá! Quero um orçamento da estação RIS ("+name+"):\n"+pecas);waEl.hidden=false;
  }});
+document.getElementById("again").onclick=()=>{okEl.hidden=true;frm.hidden=false;say("Enviamos a configuração escolhida e retornamos com a proposta.")};
 render();
 </script>
