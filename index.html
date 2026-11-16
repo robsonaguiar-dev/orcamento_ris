@@ -126,7 +126,7 @@ aside li small{font:400 11.5px var(--font-mono);color:#8fb0c2;overflow-wrap:anyw
     <aside aria-live="polite">
       <div><span class="label">Sua configuração</span><h3 id="s-name">Personalizada</h3></div>
       <ul id="s-list"></ul>
-      <div class="total"><span class="label">Valor médio estimado</span><b id="s-total"></b><small id="s-range" style="color:#b9d6e0"></small><small>Previsão para a semana de 23/11/2026, com margem para variação de preço (memória e SSD em alta). O valor final é confirmado na proposta.</small></div>
+      <div class="total"><span class="label">Valor médio estimado</span><b id="s-total"></b><small>Valor médio estimado para a semana de 23/11/2026, sujeito a variação de mercado. O valor final é confirmado na proposta.</small></div>
       <form id="frm" class="send" autocomplete="off">
         <label class="label" for="cli">Seu nome</label>
         <input id="cli" type="text" placeholder="Nome ou clínica" maxlength="80" required>
@@ -222,7 +222,7 @@ function renderPresets(){
   const on=JSON.stringify(S)===JSON.stringify(p.sel);b.setAttribute("aria-pressed",on);
   b.innerHTML=`<div class="top"><h3>${p.tier}</h3><span class="plat">${c.p.toUpperCase()}</span></div><div class="use">${p.use}</div>
   <dl><dt>CPU</dt><dd>${c.n}</dd><dt>GPU</dt><dd>${by("gpu",p.sel.gpu).n}</dd><dt>Memória</dt><dd>32 GB DDR5</dd><dt>SSD</dt><dd>1 TB NVMe</dd><dt>Refrig.</dt><dd>${by("cooler",p.sel.cooler).n}</dd></dl>
-  <div class="price"><span class="label">Valor médio</span><div style="text-align:right"><b>${fmt(avg(p.sel))}</b><small class="rg">${rng(p.sel)}</small></div></div>`;
+  <div class="price"><span class="label">Valor médio</span><b>${fmt(avg(p.sel))}</b></div>`;
   b.onclick=()=>{S={...p.sel};name=p.tier+" · "+c.p;render();document.getElementById("h-monte").scrollIntoView({behavior:"smooth"})};
   el.appendChild(b)});
 }
@@ -252,7 +252,6 @@ function renderSummary(){
  document.getElementById("s-name").textContent=name;
  document.getElementById("s-list").innerHTML=lines().map(l=>`<li><span>${l[1]}</span><small>${l[0]} · ${l[2]}</small></li>`).join("");
  document.getElementById("s-total").textContent="≈ "+fmt(avg(S));
- document.getElementById("s-range").textContent=rng(S);
 }
 function render(){renderPresets();renderGroups();renderSummary();refreshWa()}
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderPresets()});
